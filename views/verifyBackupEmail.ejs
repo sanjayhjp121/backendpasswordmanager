@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="Start your development with a Dashboard for Bootstrap 4.">
+  <meta name="author" content="Creative Tim">
+  <title>Welcome to Password Manager </title>
+  <!-- Favicon -->
+  <link rel="icon" href="assets/img/brand/favicon.png" type="image/png">
+  <!-- Fonts -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700">
+  <!-- Icons -->
+  <link rel="stylesheet" href="assets/vendor/nucleo/css/nucleo.css" type="text/css">
+  <link rel="stylesheet" href="assets/vendor/@fortawesome/fontawesome-free/css/all.min.css" type="text/css">
+  <!-- Page plugins -->
+  <!-- Argon CSS -->
+  <link rel="stylesheet" href="assets/css/argon.css?v=1.2.0" type="text/css">
+
+
+</head>
+<body style="width:100%; font-family: Arial; height:100%; background:#F0F0F0; color: #191b1f;">
+	<table cellspacing="0" cellpadding="0" width="800" style="background-color: #fff;padding: 0;border-collapse:collapse;margin: 0 auto; " border="0">
+		<tbody>
+			<tr>
+				<td height="30"></td>
+			</tr>
+			<tr>
+				<td class="theme_logo" style="text-align: center;padding: 0 40px;">
+					<img src="">
+				</td>
+			</tr>
+			<tr>
+				<td height="20"></td>
+			</tr>
+			<tr>
+				<td style="padding: 0 40px;font-size: 17px;text-align: center;line-height: 25px; "><b>Dear <%= name%></b>
+				</td>
+			</tr>
+			<tr>
+				<td height="20"></td>
+			</tr>
+			<tr>
+				<td style="padding: 0 40px;font-size: 17px;line-height: 25px; "> 
+					We received a request to verify the backup email address, please click the button below to verify your backup email address
+				</td>
+			</tr>
+			<tr>
+				<td height="20"></td>
+			</tr>
+			<tr>
+				<td style="padding: 0 40px;font-size: 17px;text-align: center;line-height: 25px;">
+					<div style="text-align: center;">
+						<a href="<%= link %>" style="background-color: #0000FF; color: white; padding: 10px 20px; text-align: center; text-decoration: none; display: inline-block; font-size: 17px; margin: 4px 2px; cursor: pointer; border-radius: 8px;">
+							Verify
+						</a>
+					</div>
+				</td>
+			</tr>
+			<tr>
+				<td height="20"></td>
+			</tr>
+			<tr>
+				<td style="padding: 0 40px;font-size: 17px;line-height: 25px; "> 
+					If you did not make this request, please ignore this email.
+				</td>
+			</tr>
+			<tr>
+				<td height="20"></td>
+			</tr>
+			<tr>
+				<td style="padding: 0px 40px;font-size: 17px;line-height: 25px; ">Best regards,<br>Password Manager Team
+				</td>
+			</tr>
+			<tr>
+				<td height="20"></td>
+			</tr>
+			<tr>
+				<td height="15" style="background-color:#0000FF;"></td>
+			</tr>
+			<tr>
+				<td style="text-align: center;color: #fff;font-size: 14px;background-color:#0000FF;">Copyright © <%= new Date().getFullYear();%>, Password Manager All Rights Reserved. </td>
+			</tr>
+			<tr>
+				<td height="15" style="background-color:#0000FF;"></td>
+			</tr>
+		</tbody>
+	</table>
+</body>
+</html>
