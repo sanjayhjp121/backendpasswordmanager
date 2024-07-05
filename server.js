@@ -28,7 +28,8 @@ const corsOptions = {
     "allowedHeaders": 'Content-Type, Authorization'
 }
 
-
+app.use(cors());
+app.options('*', cors(corsOptions)); 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(
@@ -59,8 +60,8 @@ app.use((err, req, res, next) => {
     res.status(status).json({ error: err.message || "Internal Server Error" });
 });
 
-app.use(cors());
-app.options('*', cors(corsOptions)); 
+// app.use(cors());
+// app.options('*', cors(corsOptions)); 
 
 server.listen(process.env.PORT || 5000, () => {
     console.log("****************************");
