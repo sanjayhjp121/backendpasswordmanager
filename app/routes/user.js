@@ -110,4 +110,25 @@ router.post(
     controller.revokeAccess
 )
 
+router.post(
+    '/revealPassword',
+    requireAuth,
+    authorize('user'),
+    controller.revealPassword
+)
+
+router.post(
+    '/createAgency',
+    requireAuth,
+    authorize('user'),
+    controller.createAgency
+)
+
+router.get(
+    '/listAllAgency',
+    requireAuth,
+    authorize('user'),
+    controller.listAllAgency
+)
+
 module.exports = router

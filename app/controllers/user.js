@@ -11,13 +11,18 @@ const emailer = require('../utils/emailer')
 const jwt = require("jsonwebtoken")
 const { getMessage } = require("../utils/responseMessage")
 const { default: mongoose } = require('mongoose');
+const useragent = require('useragent');
+const expressIp = require('express-ip');
+const geoip = require('geoip-lite');
 
 
 const memberModel = require('../models/member')
 const passwordModel = require('../models/password');
 const OTP = require('../models/otp')
 const User = require('../models/user')
-
+const Log = require('../models/logs');
+const subscription = require('../models/subscription');
+const agency = require('../models/agency');
 // ------------------------------------------------------------------------
 
 
@@ -372,10 +377,32 @@ exports.getProfile = async (req, res) => {
     }
 }
 
+exports.createAgency = async (req, res) => {
+    try {
+        const data = req.body;
+        data.user = req.user._id
+        const agencyData = new agency(data);
+        await agencyData.save();
+        return res.status(200).json({ message: "Agency saved successfully" });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+}
+
+exports.listAllAgency = async (req, res) => {
+    try {
+        const data = await agency.find({ user: new mongoose.Types.ObjectId(req.user._id) })
+        return res.status(200).json({ data: data });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+}
 
 exports.createPassword = async (req, res) => {
     try {
-        const { siteName, siteURL, username, password } = req.body;
+        const { siteName, siteURL, username, password, agencyId } = req.body;
         const user = req.user;
         const passwordCount = await passwordModel.countDocuments({ user: user._id });
 
@@ -398,7 +425,7 @@ exports.createPassword = async (req, res) => {
             return res.status(403).json({ msg: 'Password limit reached' });
         }
 
-        const newPassword = new passwordModel({ user: user._id, siteName, siteURL, username, password });
+        const newPassword = new passwordModel({ user: user._id, siteName, siteURL, username, password,agency: agencyId });
         await newPassword.save();
         return res.status(201).json({ message: 'Password saved successfully' });
     } catch (error) {
@@ -413,6 +440,7 @@ exports.createMember = async (req, res) => {
     try {
         const data = req.body;
         data.user = req.user._id;
+        data.agency = data.agencyId
 
         if (!data.password) {
             data.password = generateRandomPassword();
@@ -462,11 +490,11 @@ exports.grantAccess = async (req, res) => {
     try {
         const { passwordId, memberId } = req.body;
         const password = await passwordModel.findById(passwordId);
-        
+
         if (!password) {
             return res.status(404).json({ message: 'Password not found' });
         }
-        
+
         if (!password.user.equals(req.user._id)) {
             return res.status(403).json({ message: 'Unauthorized' });
         }
@@ -488,11 +516,11 @@ exports.revokeAccess = async (req, res) => {
     try {
         const { passwordId, memberId } = req.body;
         const password = await passwordModel.findById(passwordId);
-        
+
         if (!password) {
             return res.status(404).json({ message: 'Password not found' });
         }
-        
+
         if (!password.user.equals(req.user._id)) {
             return res.status(403).json({ message: 'Unauthorized' });
         }
@@ -508,10 +536,91 @@ exports.revokeAccess = async (req, res) => {
 };
 
 
-exports.listAllMember = async(req, res) => {
+exports.listAllMember = async (req, res) => {
     try {
-        const memberlist = await memberModel.find({user : new mongoose.Types.ObjectId(req.user._id)});
+        const memberlist = await memberModel.find({ user: new mongoose.Types.ObjectId(req.user._id) });
         return res.status(200).json({ data: memberlist });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+}
+
+
+
+exports.revealPassword = async (req, res) => {
+    try {
+        const { id, username } = req.body;
+        // const credential = await Credential.findById(id);
+
+        // if (!credential) return res.status(404).json({ message: 'Credential not found' });
+
+        // const isPasswordCorrect = await bcrypt.compare(req.body.password, credential.password);
+        const isPasswordCorrect = true
+
+        if (isPasswordCorrect) {
+            const agent = useragent.parse(req.headers['user-agent']);
+            const geo = geoip.lookup(req.ipInfo.ip);
+
+            const logEntry = new Log({
+                action: 'reveal',
+                user: { id: req.user.id, username: req.user.unique_id },
+                ip: req.ipInfo.ip,
+                browser: agent.toAgent(),
+                os: agent.os.toString(),
+                location: {
+                    country: geo ? geo.country : 'Unknown',
+                    region: geo ? geo.region : 'Unknown',
+                    city: geo ? geo.city : 'Unknown'
+                },
+                device: agent.device.toString(),
+                network: req.headers['network-type'] || 'Unknown',
+                requestUrl: req.originalUrl,
+                requestMethod: req.method,
+                responseStatus: 200,
+                responseTime: Date.now() - req.startTime, // assuming req.startTime is set at request start
+                // metadata: { website: credential.website }
+            });
+
+            await logEntry.save();
+
+            res.json({ password: req.body.password });
+        } else {
+            res.status(401).json({ message: 'Incorrect password' });
+        }
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+}
+
+
+
+exports.createSubscription = async (req, res) => {
+    try {
+        const data = req.body;
+        if (!data.expiration_date) {
+            return res.status(422).json({ message: 'Expiration date is required' })
+        }
+        const subscriptionData = new subscription(data);
+        await subscriptionData.save();
+        return res.status(200).json({ message: "Subscription saved successfully" });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+}
+
+
+exports.createVault = async (req, res) => {
+    try {
+        const data = req.body;
+        if (!data.expiration_date) {
+            return res.status(422).json({ message: 'Expiration date is required' })
+        }
+        const subscriptionData = new subscription(data);
+        await subscriptionData.save();
+        return res.status(200).json({ message: "Subscription saved successfully" });
     } catch (error) {
         console.error(error);
         return res.status(500).json({ message: 'Internal server error' });
