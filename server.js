@@ -39,9 +39,9 @@ app.use(
 app.use(passport.initialize());
 app.use(fileUpload());
 
-app.use('/user', userRoutes) // User routes
-app.use('/admin', adminRoutes) // admin routes
-app.use('/member', memberRoutes) // admin routes
+app.use('/user', userRoutes) // admin routes
+app.use('/admin', adminRoutes) // superadmin routes
+app.use('/member', memberRoutes) // user routes
 
 
 app.use((req, res, next) => {

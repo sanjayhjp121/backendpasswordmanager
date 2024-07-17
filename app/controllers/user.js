@@ -412,14 +412,18 @@ exports.createPassword = async (req, res) => {
 exports.createMember = async (req, res) => {
     try {
         const data = req.body;
+        console.log(data);
         data.user = req.user._id;
+        console.log(data.user);
 
         if (!data.password) {
             data.password = generateRandomPassword();
+            console.log(data.password);
         }
 
         if (!data.username) {
             data.username = await generateUsername(data.full_name);
+            console.log(data.username)
         }
 
         const newMember = new memberModel(data);
@@ -440,8 +444,9 @@ const generateRandomPassword = () => {
     return password;
 };
 
-const generateUsername = async (fullName) => {
-    const baseUsername = fullName.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 10);
+const generateUsername = async (full_name) => {
+    const baseUsername = full_name.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 10);
+    console.log(baseUsername);
     let uniqueUsername = baseUsername;
     let exists = true;
     let counter = 1;

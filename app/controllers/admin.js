@@ -75,8 +75,8 @@ const generateToken = (_id, remember_me) => {
 exports.addAdmin = async (req, res) => {
   try {
     const data = {
-      full_name: "Bishwjeet",
-      email: "bishwjeetkumar7250@gmail.com",
+      full_name: "Sanjay",
+      email: "Sanjay123@gmail.com",
       password: "1234",
       phone_number: "+919304989643",
       role: "superadmin",

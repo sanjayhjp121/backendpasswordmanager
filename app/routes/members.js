@@ -67,8 +67,8 @@ router.get(
 
 router.get(
     '/getGrantedPasswordList',
-    requireAuth,
-    authorize('member'),
+    // requireAuth,
+    // authorize('member'),
     controller.getGrantedPasswordList
 )
 

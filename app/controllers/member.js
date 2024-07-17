@@ -300,37 +300,41 @@ exports.getProfile = async (req, res) => {
 
 
 
-// exports.getGrantedPasswordList = async (req, res) => {
-//     try {
-//         const userID = req.user._id;
-//         const data = await passwordModel.find({
-//             access: userID
-//         }).populate('user', 'username');
-//         const filteredPasswords = data.filter(password => {
-//             const accessIds = password.access.map(access => access.toString());
-//             return accessIds.includes(userID.toString());
-//         });
-
-//         res.status(200).json({ data: filteredPasswords });
-//     } catch (error) {
-//         console.error('Error fetching passwords:', error);
-//         return res.status(500).json({ message: "Internal server error" });
-//     }
-// };
-
-
-
 exports.getGrantedPasswordList = async (req, res) => {
     try {
-        const userID = req.user._id;
+        console.log("getGrantedPass api hit");
+        // const userID = req.user._id;
+        // const data = await passwordModel.find({
+        //     access: userID
+        // }).populate('user', 'username');
+        const data = await passwordModel.find({});
+        console.log(data);
+        const filteredPasswords = data.filter(password => {
+            // const accessIds = password.access.map(access => access.toString());
+            // return accessIds.includes(userID.toString());
+            return data;
+        });
 
-        const data = await passwordModel.find({
-            access: userID
-        }).select('-user -access');
-
-        res.status(200).json({ data });
+        res.status(200).json({ data: filteredPasswords });
     } catch (error) {
         console.error('Error fetching passwords:', error);
         return res.status(500).json({ message: "Internal server error" });
     }
 };
+
+
+
+// exports.getGrantedPasswordList = async (req, res) => {
+//     try {
+//         const userID = req.user._id;
+
+//         const data = await passwordModel.find({
+//             access: userID
+//         }).select('-user -access');
+
+//         res.status(200).json({ data });
+//     } catch (error) {
+//         console.error('Error fetching passwords:', error);
+//         return res.status(500).json({ message: "Internal server error" });
+//     }
+// };

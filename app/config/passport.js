@@ -54,7 +54,7 @@ const jwtOptions = {
 const jwtLogin = new JwtStrategy(jwtOptions, (payload, done) => {
   let collection;
   switch (payload.data.type) {
-    case 'admin':
+    case 'superadmin':
       collection = Admin;
       break;
     case 'user':
