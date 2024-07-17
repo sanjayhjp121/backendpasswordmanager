@@ -10,6 +10,11 @@ const memberSchema = new mongoose.Schema(
             ref: 'users',
             required: true,
         },
+        agency: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'agency',
+            required: true,
+        },
         url: {
             type: String
         },

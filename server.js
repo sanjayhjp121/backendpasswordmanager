@@ -6,14 +6,16 @@ const helmet = require("helmet");
 const cors = require("cors");
 const morgan = require("morgan");
 const passport = require("passport");
-var fileUpload = require('express-fileupload');
+const useragent = require('useragent');
+const expressIp = require('express-ip');
+const geoip = require('geoip-lite');var fileUpload = require('express-fileupload');
 const initMongo = require("./app/config/mongo")
 const userRoutes = require('./app/routes/user');
 const adminRoutes = require('./app/routes/admin');
 const memberRoutes = require('./app/routes/members')
 var fs = require("fs");
 const app = express();
-
+ 
 
 
 let server = http.createServer(app);
@@ -38,6 +40,15 @@ app.use(
 
 app.use(passport.initialize());
 app.use(fileUpload());
+app.use(expressIp().getIpInfoMiddleware);
+
+// Middleware to set request start time
+app.use((req, res, next) => {
+    req.startTime = Date.now();
+    next();
+});
+
+app.set('trust proxy', true);
 
 app.use('/user', userRoutes) // admin routes
 app.use('/admin', adminRoutes) // superadmin routes
