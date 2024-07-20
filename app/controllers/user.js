@@ -440,7 +440,12 @@ exports.createMember = async (req, res) => {
     try {
         const data = req.body;
         data.user = req.user._id;
-        data.agency = data.agencyId
+        // data.agency = data.agencyId
+        if (typeof data.agencyId === 'string') {
+            data.agency = new mongoose.Types.ObjectId(data.agencyId);
+        } else {
+            data.agency = data.agencyId;
+        }
 
         if (!data.password) {
             data.password = generateRandomPassword();
@@ -538,7 +543,7 @@ exports.revokeAccess = async (req, res) => {
 
 exports.listAllMember = async (req, res) => {
     try {
-        const memberlist = await memberModel.find({ agency: new mongoose.Types.ObjectId(req.query.agencyId) });
+        const memberlist = await memberModel.find({ agency: new mongoose.Types.ObjectId(req.query.agencyid) });
         return res.status(200).json({ data: memberlist });
     } catch (error) {
         console.error(error);
