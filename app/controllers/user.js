@@ -380,7 +380,7 @@ exports.getProfile = async (req, res) => {
 exports.createAgency = async (req, res) => {
     try {
         const data = req.body;
-        data.user = req.user._id
+        data.user = req.user._id;
         const agencyData = new agency(data);
         await agencyData.save();
         return res.status(200).json({ message: "Agency saved successfully" });
@@ -630,3 +630,13 @@ exports.createVault = async (req, res) => {
         return res.status(500).json({ message: 'Internal server error' });
     }
 }
+
+exports.getAllVaults = async (req, res) => {
+    try {
+        const vaults = await Vault.find();
+        return res.status(200).json(vaults);
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+};
