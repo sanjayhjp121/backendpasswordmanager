@@ -94,8 +94,7 @@ const memberSchema = new mongoose.Schema(
         },
         notes: {
             type: String
-        },
-        agency: { type: String, required: true },
+        }
     },
     {
         timestamps: true,

@@ -380,7 +380,7 @@ exports.getProfile = async (req, res) => {
 exports.createAgency = async (req, res) => {
     try {
         const data = req.body;
-        data.user = req.user._id;
+        data.user = req.user._id
         const agencyData = new agency(data);
         await agencyData.save();
         return res.status(200).json({ message: "Agency saved successfully" });
@@ -439,18 +439,20 @@ exports.createPassword = async (req, res) => {
 exports.createMember = async (req, res) => {
     try {
         const data = req.body;
-        console.log(data);
         data.user = req.user._id;
-        data.agency = data.agencyId
+        // data.agency = data.agencyId
+        if (typeof data.agencyId === 'string') {
+            data.agency = new mongoose.Types.ObjectId(data.agencyId);
+        } else {
+            data.agency = data.agencyId;
+        }
 
         if (!data.password) {
             data.password = generateRandomPassword();
-            console.log(data.password);
         }
 
         if (!data.username) {
             data.username = await generateUsername(data.full_name);
-            console.log(data.username)
         }
 
         const newMember = new memberModel(data);
@@ -471,9 +473,8 @@ const generateRandomPassword = () => {
     return password;
 };
 
-const generateUsername = async (full_name) => {
-    const baseUsername = full_name.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 10);
-    console.log(baseUsername);
+const generateUsername = async (fullName) => {
+    const baseUsername = fullName.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 10);
     let uniqueUsername = baseUsername;
     let exists = true;
     let counter = 1;
@@ -542,7 +543,7 @@ exports.revokeAccess = async (req, res) => {
 
 exports.listAllMember = async (req, res) => {
     try {
-        const memberlist = await memberModel.find({ user: new mongoose.Types.ObjectId(req.user._id) });
+        const memberlist = await memberModel.find({ agency: new mongoose.Types.ObjectId(req.query.agencyid) });
         return res.status(200).json({ data: memberlist });
     } catch (error) {
         console.error(error);
@@ -631,12 +632,14 @@ exports.createVault = async (req, res) => {
     }
 }
 
-exports.getAllVaults = async (req, res) => {
+
+
+exports.listAllPasswordByAgency = async (req, res) => {
     try {
-        const vaults = await Vault.find();
-        return res.status(200).json(vaults);
+        const passwordlist = await passwordModel.find({ agency: new mongoose.Types.ObjectId(req.query.agencyid) });
+        return res.status(200).json({ data: passwordlist });
     } catch (error) {
         console.error(error);
         return res.status(500).json({ message: 'Internal server error' });
     }
-};
+}
