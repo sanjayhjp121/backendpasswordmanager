@@ -50,9 +50,9 @@ app.use((req, res, next) => {
 
 app.set('trust proxy', true);
 
-app.use('/user', userRoutes) // User routes
-app.use('/admin', adminRoutes) // admin routes
-app.use('/member', memberRoutes) // admin routes
+app.use('/user', userRoutes) // admin routes
+app.use('/admin', adminRoutes) // superadmin routes
+app.use('/member', memberRoutes) // user routes
 
 
 app.use((req, res, next) => {
