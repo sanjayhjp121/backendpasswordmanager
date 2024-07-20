@@ -125,6 +125,13 @@ router.post(
 )
 
 router.get(
+    '/listAllPasswordByAgency',
+    requireAuth,
+    authorize('user'),
+    controller.listAllPasswordByAgency
+)
+
+router.get(
     '/listAllAgency',
     requireAuth,
     authorize('user'),

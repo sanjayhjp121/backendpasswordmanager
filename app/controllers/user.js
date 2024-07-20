@@ -631,3 +631,15 @@ exports.createVault = async (req, res) => {
         return res.status(500).json({ message: 'Internal server error' });
     }
 }
+
+
+
+exports.listAllPasswordByAgency = async (req, res) => {
+    try {
+        const passwordlist = await passwordModel.find({ agency: new mongoose.Types.ObjectId(req.query.agencyid) });
+        return res.status(200).json({ data: passwordlist });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+}
