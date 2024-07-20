@@ -31,6 +31,18 @@ const passwordSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    Phone2FA: {
+        type: String,
+        default: null,
+    },
+    backupCodes: {
+        type: String,
+        default: null,
+    },
+    notes: {
+        type: String,
+        default: null,
+    },
     access: [
         {
             type: mongoose.Schema.Types.ObjectId,

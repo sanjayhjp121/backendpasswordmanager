@@ -538,7 +538,7 @@ exports.revokeAccess = async (req, res) => {
 
 exports.listAllMember = async (req, res) => {
     try {
-        const memberlist = await memberModel.find({ user: new mongoose.Types.ObjectId(req.user._id) });
+        const memberlist = await memberModel.find({ agency: new mongoose.Types.ObjectId(req.query.agencyId) });
         return res.status(200).json({ data: memberlist });
     } catch (error) {
         console.error(error);
