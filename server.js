@@ -74,7 +74,7 @@ app.use((err, req, res, next) => {
 // app.use(cors());
 // app.options('*', cors(corsOptions)); 
 
-server.listen(process.env.PORT || 5000, () => {
+server.listen(process.env.PORT || 5002, () => {
     console.log("****************************");
     console.log(
         `*    Starting ${process.env.ENV === "local" ? "HTTP" : "HTTPS"
