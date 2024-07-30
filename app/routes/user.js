@@ -138,4 +138,26 @@ router.get(
     controller.listAllAgency
 )
 
+router.get(
+    '/testemail',
+    // requireAuth,
+    // authorize('user'),
+    controller.testemail
+)
+
+router.get(
+    '/showAllLogs',
+    requireAuth,
+    authorize('user'),
+    controller.showAllLogs
+)
+
+
+router.get(
+    '/numberOfAgency',
+    trimRequest.all,
+    requireAuth,
+    authorize('user'),
+    controller.numberOfAgency
+)
 module.exports = router

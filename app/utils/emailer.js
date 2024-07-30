@@ -389,39 +389,43 @@ module.exports = {
   },
 
   async sendAccountCreationEmail(user, template) {
-    return new Promise(async (resolve, reject) => {
-      try {
-        user = JSON.parse(JSON.stringify(user));
-
-        if (!user.full_name) {
-          user.full_name = "user";
-        }
-
-        app.mailer.send(
-          `${template}`,
-          {
-            to: user.email,
-            subject: `Accounted Created - ${APP_NAME}`,
-            name: `${capitalizeFirstLetter(user.full_name)}`,
-            email: user.email,
-            password: user.password,
-            website_url: process.env.FRONTEND_PROD_URL,
-          },
-          function (err) {
-            if (err) {
-              console.log("There was an error sending the email" + err);
-              reject(buildErrObject(422, err.message));
-            } else {
-              console.log("VERIFICATION EMAIL SENT");
-              resolve(true);
+    return new Promise((resolve, reject) => {
+        try {
+            // Ensure user is an object
+            if (!user || typeof user !== 'object') {
+                return reject(buildErrObject(422, 'Invalid user object'));
             }
-          }
-        );
-      } catch (err) {
-        reject(buildErrObject(422, err.message));
-      }
+
+            // Ensure user properties exist
+            if (!user.full_name) {
+                user.full_name = "user";
+            }
+
+            app.mailer.send(
+                `${template}`,
+                {
+                    to: user.email,
+                    subject: `Account Created - ${process.env.APP_NAME}`,
+                    name: user.full_name,
+                    email: user.email,
+                    password: user.password,
+                    website_url: process.env.FRONTEND_PROD_URL,
+                },
+                function (err) {
+                    if (err) {
+                        console.error("There was an error sending the email: " + err);
+                        reject(buildErrObject(422, err.message));
+                    } else {
+                        console.log("VERIFICATION EMAIL SENT");
+                        resolve(true);
+                    }
+                }
+            );
+        } catch (err) {
+            reject(buildErrObject(422, err.message));
+        }
     });
-  },
+},
 
   async sendContactUsEmail(user, template) {
     return new Promise(async (resolve, reject) => {

@@ -5,6 +5,9 @@ const mongoosePaginate = require("mongoose-paginate-v2");
 
 const agencySchema = new mongoose.Schema(
     {
+        image: {
+            type: String
+        },
         user: {
             type: mongoose.ObjectId,
             ref: 'users'

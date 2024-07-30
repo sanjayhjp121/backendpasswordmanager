@@ -8,6 +8,7 @@ const jwt = require("jsonwebtoken")
 const passwordModel = require("../models/password")
 const User = require("../models/user");
 const Admin = require("../models/admin");
+const agencyModel = require("../models/agency")
 
 const generateToken = (_id, remember_me) => {
   const expiration = Math.floor(Date.now() / 1000) + (60 * 60 * 24 * (remember_me === true ? process.env.JWT_EXPIRATION_DAY_FOR_REMEMBER_ME : process.env.JWT_EXPIRATION_DAY));
@@ -261,6 +262,21 @@ exports.getUserDetail = async (req, res) => {
     return res.status(200).json({
       data: user,
       passwords: passwords,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
+
+exports.numberOfAgency = async (req, res) => {
+  try {
+    const agencyCount = await agencyModel.countDocuments({});
+
+    return res.status(200).json({
+      data: agencyCount,
     });
   } catch (error) {
     console.log(error);

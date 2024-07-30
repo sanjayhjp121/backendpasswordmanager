@@ -2,6 +2,7 @@ const path = require('path')
 const {
     uploadFileToLocal
 } = require("../utils/helpers");
+const { decrypt } = require('../utils/encryptionUtils');
 
 const absolutePath = path.join(__dirname, '../../public/');
 
@@ -11,11 +12,15 @@ const emailer = require('../utils/emailer')
 const jwt = require("jsonwebtoken")
 const { getMessage } = require("../utils/responseMessage")
 const { default: mongoose } = require('mongoose');
-
+const useragent = require('useragent');
+const expressIp = require('express-ip');
+const geoip = require('geoip-lite');
 
 const memberModel = require('../models/member')
 const passwordModel = require('../models/password');
-const OTP = require('../models/otp')
+const OTP = require('../models/otp');
+const password = require('../models/password');
+const passwordRevealLogSchema = require("../models/passwordRevealLog");
 
 // ------------------------------------------------------------------------
 
@@ -334,3 +339,56 @@ exports.getGrantedPasswordList = async (req, res) => {
         return res.status(500).json({ message: "Internal server error" });
     }
 };
+
+
+exports.showPassword = async (req, res) => {
+    try {
+        const { passwordId } = req.query;
+        if (!passwordId) {
+            return res.status(400).json({ message: "Password ID is required." });
+        }
+
+        const passwordData = await passwordModel.findOne({ _id: new mongoose.Types.ObjectId(passwordId) })
+            .select('password iv');
+
+        const Data = await passwordModel.findOne({ _id: new mongoose.Types.ObjectId(passwordId) });
+        if (!passwordData) {
+            return res.status(404).json({ message: "Password not found." });
+        } else {
+            const agent = useragent.parse(req.headers['user-agent']);
+            const geo = geoip.lookup(req.ipInfo.ip);
+
+            const logEntry = new passwordRevealLogSchema({
+                action: 'reveal',
+                adminId: Data.user,
+                user: { id: req.user.id, username: req.user.full_name },
+                password: Data._id,
+                agency: Data.agency,
+                ip: req.ipInfo.ip,
+                browser: agent.toAgent(),
+                os: agent.os.toString(),
+                location: {
+                    country: geo ? geo.country : 'Unknown',
+                    region: geo ? geo.region : 'Unknown',
+                    city: geo ? geo.city : 'Unknown'
+                },
+                device: agent.device.toString(),
+                network: req.headers['network-type'] || 'Unknown',
+                requestUrl: req.originalUrl,
+                requestMethod: req.method,
+                responseStatus: 200,
+                responseTime: Date.now() - req.startTime, // assuming req.startTime is set at request start
+                // metadata: { website: credential.website }
+            });
+
+            await logEntry.save();
+        }
+        const decryptedPassword = decrypt(passwordData.iv, passwordData.password);
+
+
+        res.status(200).json({ data: decryptedPassword });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Internal server error." });
+    }
+}

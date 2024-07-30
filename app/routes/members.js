@@ -72,5 +72,12 @@ router.get(
     controller.getGrantedPasswordList
 )
 
+router.get(
+    '/showPassword',
+    requireAuth,
+    authorize('member'),
+    controller.showPassword
+)
+
 
 module.exports = router

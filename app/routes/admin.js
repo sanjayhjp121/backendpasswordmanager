@@ -39,5 +39,13 @@ router.get(
     controller.getUserDetail
 )
 
+router.get(
+    '/numberOfAgency',
+    trimRequest.all,
+    requireAuth,
+    authorize('superadmin'),
+    controller.numberOfAgency
+)
+
 
 module.exports = router

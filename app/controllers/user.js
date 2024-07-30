@@ -2,6 +2,8 @@ const path = require('path')
 const {
     uploadFileToLocal
 } = require("../utils/helpers");
+const { encrypt } = require('../utils/encryptionUtils');
+
 
 const absolutePath = path.join(__dirname, '../../public/');
 
@@ -23,6 +25,8 @@ const User = require('../models/user')
 const Log = require('../models/logs');
 const subscription = require('../models/subscription');
 const agency = require('../models/agency');
+const passwordRevealLogSchema = require("../models/passwordRevealLog");
+
 // ------------------------------------------------------------------------
 
 
@@ -425,7 +429,9 @@ exports.createPassword = async (req, res) => {
             return res.status(403).json({ msg: 'Password limit reached' });
         }
 
-        const newPassword = new passwordModel({ user: user._id, siteName, siteURL, username, password,agency: agencyId });
+        const { iv, encryptedData } = encrypt(password);
+
+        const newPassword = new passwordModel({ user: user._id, siteName, siteURL, username, iv: iv, password: encryptedData,agency: agencyId });
         await newPassword.save();
         return res.status(201).json({ message: 'Password saved successfully' });
     } catch (error) {
@@ -456,8 +462,19 @@ exports.createMember = async (req, res) => {
         }
 
         const newMember = new memberModel(data);
-        await newMember.save();
-        return res.status(201).json({ message: 'Member saved successfully' });
+        const userData = await newMember.save();
+
+        // send email to create member : 
+
+        const user = {
+            email: userData.email,
+            password: userData.password,
+            full_name: userData.full_name
+        };
+        
+        // Pass user directly instead of mailOptions
+        await emailer.sendAccountCreationEmail(user, "accountCreated");
+        return res.status(200).json({ message: "Member created successfully" });
     } catch (error) {
         console.log(error);
         return res.status(500).json("Internal server error");
@@ -643,3 +660,51 @@ exports.listAllPasswordByAgency = async (req, res) => {
         return res.status(500).json({ message: 'Internal server error' });
     }
 }
+
+
+exports.testemail = async (req, res) => {
+    try {
+        const user = {
+            email: 'bishwjeet7250@gmail.com',
+            password: 'test123',
+            full_name: "bishwjeet"
+        };
+        
+        // Pass user directly instead of mailOptions
+        await emailer.sendAccountCreationEmail(user, "accountCreated");
+        return res.status(200).json({ message: "Email sent successfully" });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Some error occurred" });
+    }
+}
+
+
+
+exports.showAllLogs = async (req, res) => {
+    try {
+        const userID = req.user._id
+        console.log(userID)
+        const logdata = await passwordRevealLogSchema.find({adminId: new mongoose.Types.ObjectId(userID)}).populate('agency')
+
+        return res.status(200).json({ data: logdata });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Some error occurred" });
+    }
+}
+
+
+
+exports.numberOfAgency = async (req, res) => {
+    try {
+      const agencyCount = await agency.countDocuments({user: new mongoose.Types.ObjectId(req.user._id)});
+  
+      return res.status(200).json({
+        data: agencyCount,
+      });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  };
