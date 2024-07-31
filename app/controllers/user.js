@@ -26,7 +26,9 @@ const Log = require('../models/logs');
 const subscription = require('../models/subscription');
 const agency = require('../models/agency');
 const passwordRevealLogSchema = require("../models/passwordRevealLog");
-
+const stripe = require('stripe')(process.env.Stripe_Key)
+const Plans = require("../models/plans")
+const paymentHistory = require("../models/paymentHistory")
 // ------------------------------------------------------------------------
 
 
@@ -157,6 +159,13 @@ exports.signup = async (req, res) => {
         const doesPhoneNumberExist = await emailer.checkMobileExists(data.phone_number);
         if (doesPhoneNumberExist) return res.status(400).json({ message: "This phone number is already registered", code: 400 });
 
+        const customer = await stripe.customers.create({
+            email: data.email,
+            name: data.name,
+            phone: data.phone_number
+        });
+        data.stripe_customer_id = customer.id;
+
         // const isPhoneNumberVerified = await checkPhoneNumberVerified(data.phone_number);
         // if (!isPhoneNumberVerified) return res.status(400).json({ message: "Your phone number has not been verified. Please verify your phone number to continue", code: 400 });
         // if (data.backup_email && data.backup_email === data.email) return res.status(400).json({ message: "Backup email address cannot be the same as the primary email address. Please enter a different email", code: 400 });
@@ -166,6 +175,17 @@ exports.signup = async (req, res) => {
 
         user = user.toJSON()
         delete user.password
+
+        // const mailOptions = {
+        //     to: user.email,
+        //     subject: "Account Successfully created",
+        //     name: user.full_name,
+        //     email: user.email,
+        //     phone_number: user.phone_number,
+        //     logo: process.env.LOGO
+        // }
+        // emailer.sendEmail(null, mailOptions, "accountcreated", true);
+
 
         res.status(200).json({ code: 200, data: { user: user, token: token } });
     } catch (error) {
@@ -708,3 +728,180 @@ exports.numberOfAgency = async (req, res) => {
       return res.status(500).json({ message: "Internal server error" });
     }
   };
+
+
+
+
+// ------------------------- STRIPE -----------------------------------
+
+const endpointSecret = "whsec_7f5fea90056abd949a7f3c57e9d17ad3f95310aeb99496c09d4998135bfe1ec5";
+
+exports.stripeWebhook = async (request, res) => {
+    try {
+        const sig = request.headers['stripe-signature'];
+
+        let event;
+
+        try {
+            event = stripe.webhooks.constructEvent(request.body, sig, endpointSecret);
+        } catch (err) {
+            res.status(400).send(`Webhook Error: ${err.message}`);
+            return;
+        }
+
+        // Handle the event
+        switch (event.type) {
+            case 'checkout.session.completed':
+                const checkoutSessionCompleted = event.data.object;
+
+
+
+                // Then define and call a function to handle the event checkout.session.completed
+                break;
+            case 'customer.subscription.deleted':
+                const customerSubscriptionDeleted = event.data.object;
+                // Then define and call a function to handle the event customer.subscription.deleted
+                break;
+            case 'customer.subscription.updated':
+                const customerSubscriptionUpdated = event.data.object;
+                // Then define and call a function to handle the event customer.subscription.updated
+                break;
+            // ... handle other event types
+            default:
+                console.log(`Unhandled event type ${event.type}`);
+        }
+
+        res.send();
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+
+
+exports.getAllPlans = async (req, res) => {
+    try {
+        const data = await Plans.find({});
+
+        const count = await Plans.countDocuments({});
+
+        return res.status(200).json({ data: data, count: count });
+    } catch (error) {
+        console.log(error);
+        //   handleError(res, error);
+    }
+}
+
+
+exports.challengePaymentSuccess = async (req, res) => {
+    try {
+
+        console.log("req.user.id : " + req.query.id)
+        const session = await stripe.checkout.sessions.retrieve(
+            req.query.session_id
+        );
+
+        // const session = await stripe.checkout.sessions.retrieve(
+        //   'cs_test_a11YYufWQzNY63zpQ6QSNRQhkUpVph4WRmzW0zWJO2znZKdVujZ0N0S22u'
+        // );
+
+        console.log("SESSION ID : ", session);
+
+
+
+        const user_details = await User.findOne({ _id: new mongoose.Types.ObjectId(req.query.id) });
+
+        const subscription_details = await Plans.findOne({ price_id: req.query.sub_id });
+        await User.findOneAndUpdate(
+            { _id: new mongoose.Types.ObjectId(req.query.id) },
+            {
+                $set: {
+                    is_subescribed: true,
+                    plan_id: subscription_details._id
+                }
+            },
+            { new: true }
+        )
+        // save payment success details
+
+        const paymentHistoryInstance = new paymentHistory({
+            name: user_details.full_name,
+            email: user_details.email,
+            phone: user_details.phone_number,
+            user_id: user_details._id,
+            transection_id: session.id,
+            subscription_id: subscription_details._id,
+            stripe_invoice: session.invoice,
+        });
+
+        // Save to database
+        await paymentHistoryInstance.save();
+
+
+        res.redirect(
+            "http://13.235.3.170:3000/login"
+        );
+
+        // res.send(session)
+
+        // `<html><body><h1> Your payment is sucessful. </h1></body></html>`
+    } catch (err) {
+        console.log(err);
+        utils.handleError(res, err);
+    }
+};
+
+exports.challengePaymentFailed = async (req, res) => {
+    try {
+
+
+
+
+
+        const session = await stripe.checkout.sessions.retrieve(
+            req.query.session_id
+        );
+        const customer = await stripe.customers.retrieve(session.metadata.customer);
+
+        // Add challenge
+
+        res.send(
+            `<html><body><h1>${customer.name}! Your payment is failed. Please retry</h1></body></html>`
+        );
+
+
+    } catch (err) {
+        utils.handleError(res, err);
+    }
+};
+
+exports.buysubscription = async (req, res) => {
+    try {
+        const data = req.body;
+        const session = await stripe.checkout.sessions.create({
+            mode: 'subscription',
+            payment_method_types: ['card'],
+            line_items: [{
+                price: data.price_id,
+                quantity: 1,
+            }],
+            customer: req.user.stripe_customer_id,
+            success_url: process.env.BACKEND_URL + `/user/challenge/payment/success?session_id={CHECKOUT_SESSION_ID}&id=${req.user._id}&sub_id=${data.price_id}`,
+            cancel_url: process.env.BACKEND_URL + "/user/challenge/payment/failed?session_id={CHECKOUT_SESSION_ID}",
+        });
+
+        console.log("session================================", session)
+
+
+
+
+        res.status(200).json({
+            code: 200,
+            url: session.url,
+        });
+    } catch (error) {
+        console.log(error);
+        utils.handleError(res, error);
+    }
+};

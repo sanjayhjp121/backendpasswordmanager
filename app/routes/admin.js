@@ -47,5 +47,17 @@ router.get(
     controller.numberOfAgency
 )
 
+router.post(
+    '/createPriceGroup',
+    trimRequest.all,
+    controller.createPriceGroup
+)
 
+router.get(
+    '/getAllPlans',
+    trimRequest.all,
+    requireAuth,
+    authorize('superadmin'),
+    controller.getAllPlans
+)
 module.exports = router

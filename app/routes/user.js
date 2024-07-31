@@ -160,4 +160,22 @@ router.get(
     authorize('user'),
     controller.numberOfAgency
 )
+
+
+router.get(
+    '/getAllPlans',
+    trimRequest.all,
+    requireAuth,
+    authorize('user'),
+    controller.getAllPlans
+)
+
+router.post(
+    '/buysubscription',
+    requireAuth,
+    authorize('user'),
+    controller.buysubscription
+)
+
+
 module.exports = router
