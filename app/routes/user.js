@@ -104,6 +104,20 @@ router.post(
 )
 
 router.post(
+    '/createVault',
+    requireAuth,
+    authorize('user'),
+    controller.createVault
+)
+
+router.get(
+    '/getVault',
+    requireAuth,
+    authorize('user'),
+    controller.getVault
+)
+
+router.post(
     '/revokeAccess',
     requireAuth,
     authorize('user'),
@@ -177,5 +191,16 @@ router.post(
     controller.buysubscription
 )
 
+router.get(
+    '/getMySubscriptions',
+    trimRequest.all,
+    requireAuth,
+    authorize('user'),
+    controller.getMySubscriptions
+)
+
+
+router.get('/challenge/payment/success', controller.challengePaymentSuccess);
+router.get('/challenge/payment/failed', controller.challengePaymentFailed);
 
 module.exports = router

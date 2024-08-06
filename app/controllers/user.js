@@ -18,6 +18,7 @@ const expressIp = require('express-ip');
 const geoip = require('geoip-lite');
 
 
+const vaultsModel = require('../models/vault')
 const memberModel = require('../models/member')
 const passwordModel = require('../models/password');
 const OTP = require('../models/otp')
@@ -657,12 +658,23 @@ exports.createSubscription = async (req, res) => {
 exports.createVault = async (req, res) => {
     try {
         const data = req.body;
+        data.user_id = req.user._id;
         if (!data.expiration_date) {
             return res.status(422).json({ message: 'Expiration date is required' })
         }
-        const subscriptionData = new subscription(data);
-        await subscriptionData.save();
-        return res.status(200).json({ message: "Subscription saved successfully" });
+        const vaultsData = new vaultsModel(data);
+        await vaultsData.save();
+        return res.status(200).json({ message: "Vaults saved successfully" });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+}
+
+exports.getVault = async (req, res) => {
+    try {
+        const data = await vaultsModel.find({_id: new mongoose.Types.ObjectId(req.user._id)})
+        return res.status(200).json({ message: "Vaults saved successfully" });
     } catch (error) {
         console.error(error);
         return res.status(500).json({ message: 'Internal server error' });
@@ -840,7 +852,7 @@ exports.challengePaymentSuccess = async (req, res) => {
 
 
         res.redirect(
-            "http://13.235.3.170:3000/login"
+            "http://localhost:3000/login"
         );
 
         // res.send(session)
@@ -905,3 +917,14 @@ exports.buysubscription = async (req, res) => {
         utils.handleError(res, error);
     }
 };
+
+
+exports.getMySubscriptions = async(req, res) => {
+    try {
+        const data = await paymentHistory.findOne({ user_id: new mongoose.Types.ObjectId(req.user._id) }).populate('subscription_id');
+        return res.status(200).json({ data: data });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+}
