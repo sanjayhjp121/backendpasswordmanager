@@ -5,6 +5,8 @@ const emailer = require("../utils/emailer");
 const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken")
 
+const vaultsModel = require('../models/vault')
+const memberModel = require('../models/member')
 const passwordModel = require("../models/password")
 const User = require("../models/user");
 const Admin = require("../models/admin");
@@ -564,3 +566,22 @@ exports.getpaymentHistorybyid = async (req, res) => {
   }
 
 }
+
+exports.dashboard = async (req, res) => {
+  try {
+    const agencyCount = await agency.countDocuments({});
+    const userCount = await memberModel.countDocuments({})
+    const passwordCount = await passwordModel.countDocuments({})
+    const vaultCount = await vaultsModel.countDocuments({})
+
+    return res.status(200).json({
+      agency: agencyCount,
+      user: userCount,
+      password: passwordCount,
+      vault: vaultCount
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};

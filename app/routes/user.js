@@ -199,6 +199,14 @@ router.get(
     controller.getMySubscriptions
 )
 
+router.get(
+    '/dashboard',
+    trimRequest.all,
+    requireAuth,
+    authorize('user'),
+    controller.dashboard
+)
+
 
 router.get('/challenge/payment/success', controller.challengePaymentSuccess);
 router.get('/challenge/payment/failed', controller.challengePaymentFailed);

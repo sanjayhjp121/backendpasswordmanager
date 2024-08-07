@@ -60,4 +60,13 @@ router.get(
     authorize('superadmin'),
     controller.getAllPlans
 )
+
+router.get(
+    '/dashboard',
+    trimRequest.all,
+    requireAuth,
+    authorize('superadmin'),
+    controller.dashboard
+)
+
 module.exports = router

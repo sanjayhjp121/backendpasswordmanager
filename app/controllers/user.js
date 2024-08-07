@@ -741,7 +741,24 @@ exports.numberOfAgency = async (req, res) => {
     }
   };
 
-
+  exports.dashboard = async (req, res) => {
+    try {
+      const agencyCount = await agency.countDocuments({user: new mongoose.Types.ObjectId(req.user._id)});
+      const userCount = await memberModel.countDocuments({user: new mongoose.Types.ObjectId(req.user._id)})
+      const passwordCount = await passwordModel.countDocuments({user: new mongoose.Types.ObjectId(req.user._id)})
+      const vaultCount = await vaultsModel.countDocuments({user_id: new mongoose.Types.ObjectId(req.user._id)})
+  
+      return res.status(200).json({
+        agency: agencyCount,
+        user: userCount,
+        password: passwordCount,
+        vault: vaultCount
+      });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  };
 
 
 // ------------------------- STRIPE -----------------------------------
@@ -928,3 +945,4 @@ exports.getMySubscriptions = async(req, res) => {
         return res.status(500).json({ message: 'Internal server error' });
     }
 }
+
