@@ -452,7 +452,7 @@ exports.createPassword = async (req, res) => {
 
         const { iv, encryptedData } = encrypt(password);
 
-        const newPassword = new passwordModel({ user: user._id, siteName, siteURL, username, iv: iv, password: encryptedData,agency: agencyId });
+        const newPassword = new passwordModel({ user: user._id, siteName, siteURL, username, iv: iv, password: encryptedData, agency: agencyId });
         await newPassword.save();
         return res.status(201).json({ message: 'Password saved successfully' });
     } catch (error) {
@@ -492,7 +492,7 @@ exports.createMember = async (req, res) => {
             password: userData.password,
             full_name: userData.full_name
         };
-        
+
         // Pass user directly instead of mailOptions
         await emailer.sendAccountCreationEmail(user, "accountCreated");
         return res.status(200).json({ message: "Member created successfully" });
@@ -529,9 +529,35 @@ const generateUsername = async (fullName) => {
 
 
 
+// exports.grantAccess = async (req, res) => {
+//     try {
+//         const { passwordId, memberId } = req.body;
+//         const password = await passwordModel.findById(passwordId);
+
+//         if (!password) {
+//             return res.status(404).json({ message: 'Password not found' });
+//         }
+
+//         if (!password.user.equals(req.user._id)) {
+//             return res.status(403).json({ message: 'Unauthorized' });
+//         }
+
+//         if (!password.access.includes(memberId)) {
+//             password.access.push(memberId);
+//             await password.save();
+//         }
+
+//         return res.status(200).json({ message: 'Access granted successfully' });
+//     } catch (error) {
+//         console.error(error);
+//         return res.status(500).json({ message: 'Internal server error' });
+//     }
+// };
+
+
 exports.grantAccess = async (req, res) => {
     try {
-        const { passwordId, memberId } = req.body;
+        const { passwordId, memberIds } = req.body;
         const password = await passwordModel.findById(passwordId);
 
         if (!password) {
@@ -541,13 +567,42 @@ exports.grantAccess = async (req, res) => {
         if (!password.user.equals(req.user._id)) {
             return res.status(403).json({ message: 'Unauthorized' });
         }
-
-        if (!password.access.includes(memberId)) {
-            password.access.push(memberId);
-            await password.save();
+        if (!Array.isArray(memberIds)) {
+            return res.status(400).json({ message: 'Invalid member IDs' });
         }
 
+        memberIds.forEach(memberId => {
+            if (!password.access.includes(memberId)) {
+                password.access.push(memberId);
+            }
+        });
+
+        await password.save();
+
         return res.status(200).json({ message: 'Access granted successfully' });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+
+exports.listgrantAccessPassworduser = async (req, res) => {
+    try {
+        const { passwordId } = req.query;
+
+        // Validate request body
+        if (!passwordId) {
+            return res.status(400).json({ message: 'Password ID is required' });
+        }
+
+        const password = await passwordModel.findById(passwordId).populate('access');
+
+        if (!password) {
+            return res.status(404).json({ message: 'Password not found' });
+        }
+
+        return res.status(200).json({ data: password });
     } catch (error) {
         console.error(error);
         return res.status(500).json({ message: 'Internal server error' });
@@ -673,7 +728,7 @@ exports.createVault = async (req, res) => {
 
 exports.getVault = async (req, res) => {
     try {
-        const data = await vaultsModel.find({_id: new mongoose.Types.ObjectId(req.user._id)})
+        const data = await vaultsModel.find({ _id: new mongoose.Types.ObjectId(req.user._id) })
         return res.status(200).json({ message: "Vaults saved successfully" });
     } catch (error) {
         console.error(error);
@@ -701,7 +756,7 @@ exports.testemail = async (req, res) => {
             password: 'test123',
             full_name: "bishwjeet"
         };
-        
+
         // Pass user directly instead of mailOptions
         await emailer.sendAccountCreationEmail(user, "accountCreated");
         return res.status(200).json({ message: "Email sent successfully" });
@@ -717,7 +772,7 @@ exports.showAllLogs = async (req, res) => {
     try {
         const userID = req.user._id
         console.log(userID)
-        const logdata = await passwordRevealLogSchema.find({adminId: new mongoose.Types.ObjectId(userID)}).populate('agency')
+        const logdata = await passwordRevealLogSchema.find({ adminId: new mongoose.Types.ObjectId(userID) }).populate('agency')
 
         return res.status(200).json({ data: logdata });
     } catch (error) {
@@ -730,35 +785,35 @@ exports.showAllLogs = async (req, res) => {
 
 exports.numberOfAgency = async (req, res) => {
     try {
-      const agencyCount = await agency.countDocuments({user: new mongoose.Types.ObjectId(req.user._id)});
-  
-      return res.status(200).json({
-        data: agencyCount,
-      });
-    } catch (error) {
-      console.log(error);
-      return res.status(500).json({ message: "Internal server error" });
-    }
-  };
+        const agencyCount = await agency.countDocuments({ user: new mongoose.Types.ObjectId(req.user._id) });
 
-  exports.dashboard = async (req, res) => {
-    try {
-      const agencyCount = await agency.countDocuments({user: new mongoose.Types.ObjectId(req.user._id)});
-      const userCount = await memberModel.countDocuments({user: new mongoose.Types.ObjectId(req.user._id)})
-      const passwordCount = await passwordModel.countDocuments({user: new mongoose.Types.ObjectId(req.user._id)})
-      const vaultCount = await vaultsModel.countDocuments({user_id: new mongoose.Types.ObjectId(req.user._id)})
-  
-      return res.status(200).json({
-        agency: agencyCount,
-        user: userCount,
-        password: passwordCount,
-        vault: vaultCount
-      });
+        return res.status(200).json({
+            data: agencyCount,
+        });
     } catch (error) {
-      console.log(error);
-      return res.status(500).json({ message: "Internal server error" });
+        console.log(error);
+        return res.status(500).json({ message: "Internal server error" });
     }
-  };
+};
+
+exports.dashboard = async (req, res) => {
+    try {
+        const agencyCount = await agency.countDocuments({ user: new mongoose.Types.ObjectId(req.user._id) });
+        const userCount = await memberModel.countDocuments({ user: new mongoose.Types.ObjectId(req.user._id) })
+        const passwordCount = await passwordModel.countDocuments({ user: new mongoose.Types.ObjectId(req.user._id) })
+        const vaultCount = await vaultsModel.countDocuments({ user_id: new mongoose.Types.ObjectId(req.user._id) })
+
+        return res.status(200).json({
+            agency: agencyCount,
+            user: userCount,
+            password: passwordCount,
+            vault: vaultCount
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+};
 
 
 // ------------------------- STRIPE -----------------------------------
@@ -936,7 +991,7 @@ exports.buysubscription = async (req, res) => {
 };
 
 
-exports.getMySubscriptions = async(req, res) => {
+exports.getMySubscriptions = async (req, res) => {
     try {
         const data = await paymentHistory.findOne({ user_id: new mongoose.Types.ObjectId(req.user._id) }).populate('subscription_id');
         return res.status(200).json({ data: data });

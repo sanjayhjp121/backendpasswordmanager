@@ -208,6 +208,14 @@ router.get(
 )
 
 
+router.get(
+    '/listgrantAccessPassworduser',
+    trimRequest.all,
+    requireAuth,
+    authorize('user'),
+    controller.listgrantAccessPassworduser
+)
+
 router.get('/challenge/payment/success', controller.challengePaymentSuccess);
 router.get('/challenge/payment/failed', controller.challengePaymentFailed);
 
